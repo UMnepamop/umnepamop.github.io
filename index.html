@@ -6,7 +6,7 @@
 <link rel="icon" href="img/avatar.jpg">
 <meta property="og:title" content="Линия фронта">
 <meta property="og:description" content="Стратегия в реальном времени на штабной карте. Играть бесплатно в браузере.">
-<meta property="og:image" content="img/koreya.jpg">
+<meta property="og:image" content="https://umnepamop.github.io/img/koreya.jpg">
 <title>Линия фронта</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="description" content="Линия фронта (FRONTLINE): стратегия в реальном времени на штабной карте. Играть бесплатно в браузере.">
@@ -138,6 +138,7 @@ section.block { padding-block: 88px; }
 .maps figure { margin: 0; display: grid; gap: 10px; }
 .maps figcaption { font-family: var(--font-mono); font-size: .82rem; color: var(--muted); }
 @media (max-width: 640px) { .maps { grid-template-columns: 1fr; } }
+.maps.one { grid-template-columns: 1fr; }
 
 /* Кампания */
 .campaign { background: var(--panel); border-block: 1px solid var(--line); }
@@ -200,7 +201,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <a class="btn btn-primary" href="play/">Играть в браузере</a>
           <a class="btn" href="https://t.me/liniya_fronta_dev" target="_blank" rel="noopener">Девлог в Telegram</a>
         </div>
-        <p class="note">Бесплатно, без установки · компьютер и телефон · версия 0.51, игра в разработке</p>
+        <p class="note">Бесплатно, без установки · компьютер и телефон · версия 0.52, игра в разработке</p>
       </div>
       <button class="shot screen" type="button" data-full="img/koreya.jpg" aria-label="Открыть скриншот: Корейский полуостров">
         <img src="img/koreya.jpg" alt="Скриншот игры: штабная карта Корейского полуострова, отряды двух сторон и линия фронта" width="1600" height="1000">
@@ -226,8 +227,8 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       </div>
 
       <div class="feature">
-        <button class="shot" type="button" data-full="img/gorod.jpg" aria-label="Открыть скриншот: окно города">
-          <img src="img/gorod.jpg" alt="Окно города: стройка, производство и найм пехоты, ПВО, операторов БПЛА и инженеров" loading="lazy" width="1600" height="985">
+        <button class="shot" type="button" data-full="img/afrika.jpg" aria-label="Открыть скриншот: Северная Африка">
+          <img src="img/afrika.jpg" alt="Северная Африка: фронт у Уджды, ракетный удар по заводу и бои трёх сторон" loading="lazy" width="1600" height="1000">
         </button>
         <div class="text">
           <p class="eyebrow">Тыл</p>
@@ -261,9 +262,12 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         <h3>Камень, ножницы, дрон</h3>
       </div>
       <div class="matchups">
-        <div class="mu"><span class="vs">дроны → танки</span><b>урон <em>×1,6</em></b></div>
-        <div class="mu"><span class="vs">ПВО → дроны</span><b>урон <em>×6</em></b></div>
-        <div class="mu"><span class="vs">танки → пехота</span><b>давят в поле, вязнут в городе</b></div>
+        <div class="mu"><span class="vs">пехота → расчёты БПЛА</span><b>добирается и <em>выбивает</em></b></div>
+        <div class="mu"><span class="vs">БПЛА → танки и артиллерия</span><b>бьют <em>технику</em> издалека</b></div>
+        <div class="mu"><span class="vs">танки → пехота</span><b>давят <em>в поле</em></b></div>
+        <div class="mu"><span class="vs">ПВО → дроны</span><b>сбивает до <em>70%</em></b></div>
+        <div class="mu"><span class="vs">артиллерия и РСЗО</span><b>слабы <em>вблизи</em>, нужно прикрытие</b></div>
+        <div class="mu"><span class="vs">танки</span><b>сильнее всех на земле, но <em>дороже всех</em></b></div>
       </div>
     </div>
   </section>
@@ -275,18 +279,12 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
         <h2>От Кореи до Северной Африки</h2>
         <p>Восемь карт на реальной географии: берега, реки, горы и города. События в игре вымышлены.</p>
       </div>
-      <div class="maps">
-        <figure>
-          <button class="shot" type="button" data-full="img/afrika.jpg" aria-label="Открыть скриншот: Северная Африка">
-            <img src="img/afrika.jpg" alt="Карта Северной Африки" loading="lazy" width="1600" height="1000">
-          </button>
-          <figcaption>Северная Африка</figcaption>
-        </figure>
+      <div class="maps one">
         <figure>
           <button class="shot" type="button" data-full="img/ispaniya.jpg" aria-label="Открыть скриншот: Пиренеи">
-            <img src="img/ispaniya.jpg" alt="Карта Пиренейского полуострова" loading="lazy" width="1300" height="800">
+            <img src="img/ispaniya.jpg" alt="Карта Европы, Пиренейский полуостров: Испания против пяти соседей" loading="lazy" width="1600" height="1000">
           </button>
-          <figcaption>Европа: Пиренеи</figcaption>
+          <figcaption>Европа на шесть сторон. Ещё карты: Корея, Северная Африка, Латинская Америка, Ближний Восток и другие</figcaption>
         </figure>
       </div>
     </div>
@@ -348,7 +346,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
 
 <footer>
   <div class="wrap">
-    <span>Линия фронта · FRONTLINE · версия 0.51</span>
+    <span>Линия фронта · FRONTLINE · версия 0.52</span>
     <span>Карты по реальной географии, события в игре вымышлены</span>
   </div>
 </footer>
