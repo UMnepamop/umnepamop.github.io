@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="icon" href="../img/avatar.jpg">
+<style>body{margin:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>Линия фронта: связь P2P</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Russo+One&family=PT+Sans:wght@400;700&family=PT+Mono&display=swap">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+/* Layout: same staff-map look as the game; map canvas left, link panel right (stacks on phones). Single dark look. */
+:root{
+  --bg:#141a17; --panel:#1d2521; --panel2:#25302a; --line:#3a473f; --fg:#e4e8dc; --muted:#98a394;
+  --accent:#d9b44a; --good:#6fbf73; --bad:#e2685b; --sea:#16232b; --sideA:#4f8fe0; --sideB:#e0644f;
+  --f-display:"Russo One","Arial Black",system-ui,sans-serif;
+  --f-body:"PT Sans","Segoe UI",system-ui,sans-serif;
+  --f-mono:"PT Mono",ui-monospace,Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px}
+.wrap{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(20px,4vw,28px);color:var(--accent);margin:0;letter-spacing:.03em;text-wrap:balance}
+header p{margin:0;color:var(--muted);max-width:65ch;line-height:1.45}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:14px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.map{position:relative;background:var(--sea);border:1px solid var(--line);border-radius:10px;overflow:hidden;touch-action:none}
+canvas{display:block;width:100%;height:auto;aspect-ratio:4/3;max-width:100%;cursor:crosshair}
+.maphint{position:absolute;left:10px;bottom:10px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-size:12px;color:var(--muted);pointer-events:none}
+aside{display:flex;flex-direction:column;gap:12px;min-width:0}
+section{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0;font-weight:700}
+button,input{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:7px 11px}
+button{cursor:pointer}
+button:hover:not(:disabled){border-color:var(--accent)}
+button:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button:disabled{opacity:.45;cursor:default}
+.primary{background:var(--accent);color:#1a1a12;border-color:var(--accent);font-weight:700}
+.row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.row input{flex:1;min-width:0;font-family:var(--f-mono);text-transform:lowercase}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:99px;font-size:12px;border:1px solid var(--line)}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.pill.good{border-color:var(--good);color:var(--good)}.pill.good i{background:var(--good)}
+.pill.bad{border-color:var(--bad);color:var(--bad)}.pill.bad i{background:var(--bad)}
+.pill.go{border-color:var(--accent);color:var(--accent)}.pill.go i{background:var(--accent)}
+.code{font-family:var(--f-mono);font-size:22px;letter-spacing:.12em;color:var(--accent)}
+.hosts{display:flex;flex-direction:column;gap:6px}
+.hosts:empty::before{content:"Пока никто не создал матч на этой странице.";color:var(--muted);font-size:13px}
+.host{display:flex;justify-content:space-between;align-items:center;gap:8px;background:var(--panel2);border-radius:8px;padding:6px 6px 6px 10px;font-family:var(--f-mono)}
+dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:13px}
+dt{color:var(--muted)} dd{margin:0;font-family:var(--f-mono);font-variant-numeric:tabular-nums;text-align:right}
+.note{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+label.chk{display:flex;gap:8px;align-items:center;font-size:13px;cursor:pointer}
+label.chk input{width:16px;height:16px;padding:0}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Проверка связи</h1>
+    <p>Один создаёт матч и отправляет другу ссылку. Друг открывает её в любом браузере, аккаунты не нужны. Если ваша дивизия у друга двигается, а его у вас, связь для игры работает.</p>
+  </header>
+  <div class="grid">
+    <div class="map">
+      <canvas id="cv" width="800" height="600"></canvas>
+      <div class="maphint" id="hint">Нажмите на карту, чтобы отправить свою дивизию</div>
+    </div>
+    <aside>
+      <section>
+        <div class="row" style="justify-content:space-between"><h2>Связь</h2><span class="pill" id="pill"><i></i><span id="pillT">Подключаемся…</span></span></div>
+        <div id="idle" class="row">
+          <button class="primary" id="hostBtn" disabled>Создать матч</button>
+        </div>
+        <div id="hosting" hidden>
+          <p class="note">Код матча</p>
+          <div class="code" id="codeT"></div>
+          <div class="row"><input id="linkT" readonly aria-label="Ссылка для друга"><button id="copyBtn">Копировать</button></div>
+          <p class="note" id="guestT">Отправьте другу эту ссылку и ждите.</p>
+          <button id="leaveBtn">Закрыть матч</button>
+        </div>
+        <div id="joined" hidden>
+          <p class="note" id="joinT">Подключаемся к матчу…</p>
+          <button id="leave2Btn">Выйти</button>
+        </div>
+      </section>
+      <section id="lobbyBox">
+        <h2>Есть код от друга?</h2>
+        <div class="row"><input id="codeIn" placeholder="код матча" maxlength="12" aria-label="Код матча"><button id="joinBtn" disabled>Войти</button></div>
+      </section>
+      <section>
+        <h2>Замеры</h2>
+        <dl>
+          <dt>Роль</dt><dd id="sRole">одиночная</dd>
+          <dt>Пинг до хоста</dt><dd id="sRtt">—</dd>
+          <dt>Снимок состояния</dt><dd id="sSize">—</dd>
+          <dt>Сообщений на снимок</dt><dd id="sChunks">—</dd>
+          <dt>Снимков в секунду</dt><dd id="sRate">—</dd>
+        </dl>
+        <label class="chk"><input type="checkbox" id="heavy" checked> Снимок размером как в игре (221 провинция)</label>
+        <p class="note">Хост отправляет снимок 4 раза в секунду. В игре столько же хватит: армии двигаются плавно за счёт сглаживания.</p>
+      </section>
+    </aside>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* Линия фронта — сетевой слой без Claude: WebRTC через PeerJS.
+ * Тот же API, что у net.js (room), поэтому код игры не зависит от транспорта.
+ * Хост считает симуляцию и шлёт снимки, друг шлёт команды. Данные идут напрямую
+ * между браузерами; публичный сервер PeerJS нужен только чтобы они нашли друг друга,
+ * TURN-ретранслятор PeerJS включён в настройки по умолчанию.
+ *
+ * Подключить перед кодом игры:
+ *   script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js" (тег script в head)
+ *
+ *   const net = await NetP2P.create({onStatus});
+ *   // хост
+ *   const code = await net.host({onGuest(peer), onGuestLeft(peer), onCommand(cmd, peer)});
+ *   net.inviteLink(code)          // ссылка для друга: текущий адрес + ?join=code
+ *   net.sendState(obj)            // 2–5 раз в секунду
+ *   // друг
+ *   await net.join(code, {onWelcome(info), onState(obj, meta), onHostLeft(), onFull()});
+ *   net.sendCommand(cmd)
+ *   net.rtt                       // пинг до хоста, мс
+ *   NetP2P.codeFromUrl()          // код из ?join=..., если друг пришёл по ссылке
+ */
+const NetP2P = (() => {
+  const PREFIX = 'liniya-fronta-';
+  const PING_EVERY = 2000;
+
+  async function deflate(str) {
+    if (typeof CompressionStream === 'undefined') return {z: 0, d: str};
+    const s = new Blob([str]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    return {z: 1, d: new Uint8Array(await new Response(s).arrayBuffer())};
+  }
+  async function inflate(z, d) {
+    if (!z) return d;
+    const u = d instanceof Uint8Array ? d : new Uint8Array(d);
+    const s = new Blob([u]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+    return await new Response(s).text();
+  }
+  const randCode = () => Math.random().toString(36).slice(2, 7);
+  const codeFromUrl = () => {
+    try { return (new URLSearchParams(location.search).get('join') || '').toLowerCase().replace(/[^a-z0-9]/g, '') || null; }
+    catch (e) { return null; }
+  };
+
+  function openPeer(id, peerOptions) {
+    return new Promise((resolve, reject) => {
+      const p = id ? new Peer(id, peerOptions) : new Peer(peerOptions);
+      const fail = e => { p.off('open', ok); reject(e); };
+      const ok = () => { p.off('error', fail); resolve(p); };
+      p.once('open', ok); p.once('error', fail);
+    });
+  }
+
+  async function create({onStatus = () => {}, peerOptions = {debug: 1}} = {}) {
+    if (typeof Peer === 'undefined') { onStatus({ok: false, reason: 'no_peerjs'}); return null; }
+    const net = {role: null, code: null, peer: null, rtt: null, guest: null, hostPeer: null,
+      stats: {sentBytes: 0, rawBytes: 0, chunks: 1, snaps: 0, recvSnaps: 0, lastRecv: 0}};
+    let P = null, conn = null, timer = null;
+
+    function watch(p) {
+      p.on('disconnected', () => { onStatus({ok: true, connected: false}); if (!p.destroyed) p.reconnect(); });
+      p.on('open', () => onStatus({ok: true, connected: true}));
+      p.on('error', e => onStatus({ok: false, reason: e.type || 'error', message: String(e.message || e)}));
+    }
+    net.leave = async () => {
+      clearInterval(timer);
+      try { conn && conn.open && conn.send({t: 'bye'}); } catch (e) {}
+      try { P && P.destroy(); } catch (e) {}
+      P = null; conn = null; net.role = null; net.guest = null; net.hostPeer = null;
+    };
+    net.inviteLink = code => {
+      const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('join', code || net.code); return u.toString();
+    };
+
+    /* ---------- хост ---------- */
+    net.host = async ({onGuest = () => {}, onGuestLeft = () => {}, onCommand = () => {}, code} = {}) => {
+      await net.leave();
+      for (let tries = 0; ; tries++) {           // код занят — берём другой
+        net.code = code && tries === 0 ? code : randCode();
+        try { P = await openPeer(PREFIX + net.code, peerOptions); break; }
+        catch (e) { if (e.type !== 'unavailable-id' || tries > 3) throw e; }
+      }
+      watch(P); net.role = 'host'; net.peer = P.id; let snapId = 0;
+      onStatus({ok: true, connected: true});
+      P.on('connection', c => {
+        if (conn && conn.open) { c.on('open', () => { c.send({t: 'welcome', full: true}); setTimeout(() => c.close(), 500); }); return; }
+        conn = c;
+        c.on('open', () => { net.guest = c.peer; c.send({t: 'welcome'}); onGuest(c.peer); });
+        c.on('data', m => {
+          if (c !== conn || !m) return;
+          if (m.t === 'cmd' && 'c' in m) onCommand(m.c, c.peer);
+          else if (m.t === 'ping') c.send({t: 'pong', ts: m.ts});
+          else if (m.t === 'bye') c.close();
+        });
+        c.on('close', () => { if (c === conn) { conn = null; const g = net.guest; net.guest = null; onGuestLeft(g); } });
+      });
+      net.sendState = async obj => {
+        if (!conn || !conn.open) return;
+        const raw = JSON.stringify(obj);
+        const {z, d} = await deflate(raw);
+        conn.send({t: 'snap', id: ++snapId, z, d});
+        Object.assign(net.stats, {rawBytes: raw.length, sentBytes: d.length || d.byteLength, snaps: net.stats.snaps + 1});
+      };
+      return net.code;
+    };
+
+    /* ---------- друг ---------- */
+    net.join = async (code, {onWelcome = () => {}, onState = () => {}, onHostLeft = () => {}, onFull = () => {}} = {}) => {
+      await net.leave();
+      P = await openPeer(null, peerOptions); watch(P);
+      net.role = 'guest'; net.code = code; net.peer = P.id;
+      onStatus({ok: true, connected: true});
+      let applied = 0;
+      const c = conn = P.connect(PREFIX + code, {reliable: true, serialization: 'binary'});
+      c.on('data', async m => {
+        if (!m) return;
+        if (m.t === 'welcome') { if (m.full) onFull(); else { net.hostPeer = c.peer; onWelcome({host: c.peer}); } }
+        else if (m.t === 'pong') net.rtt = Math.round(performance.now() - m.ts);
+        else if (m.t === 'snap' && m.id > applied) {
+          try {
+            const obj = JSON.parse(await inflate(m.z, m.d));
+            if (m.id <= applied) return;
+            applied = m.id; net.stats.recvSnaps++; net.stats.lastRecv = Date.now();
+            onState(obj, {id: m.id});
+          } catch (e) { onStatus({ok: false, reason: 'bad_snapshot', message: String(e)}); }
+        } else if (m.t === 'bye') c.close();
+      });
+      c.on('close', () => { if (net.hostPeer) { net.hostPeer = null; onHostLeft(); } });
+      // если хоста с таким кодом нет, PeerJS сообщает peer-unavailable через P.on('error') → onStatus
+      net.sendCommand = cmd => { if (c.open) c.send({t: 'cmd', c: cmd}); };
+      timer = setInterval(() => { if (c.open) c.send({t: 'ping', ts: performance.now()}); }, PING_EVERY);
+    };
+
+    return net;
+  }
+  return {create, codeFromUrl};
+})();
+
+
+const cv=document.getElementById('cv'),ctx=cv.getContext('2d');
+const $=id=>document.getElementById(id);
+const NAMES=['Север','Юг','Запад','Восток','Центр','Крым','Донбасс','Волга'];
+const SLOT_HOST=0,SLOT_GUEST=1;
+let S=null;                 // авторитетное состояние (у хоста и в одиночной игре)
+let view=null;              // что рисуем (у друга: последний снимок)
+let net=null,mySlot=SLOT_HOST,role='solo';
+
+function newState(){
+  const units=NAMES.map((n,i)=>({i,n,side:i%2,x:100+Math.random()*600,y:80+Math.random()*440,tx:null,ty:null,bot:i>1}));
+  units.forEach(u=>{u.tx=u.x;u.ty=u.y;});
+  // «провинции» нужны только чтобы снимок весил как настоящий
+  const prov=[];for(let i=0;i<221;i++)prov.push({owner:i%8,b:{barracks:1+(i%3),factory:i%5?0:1,extract:i%4?0:1,depot:0,fort:i%7?0:2},q:[],bq:[],militia:i%3,cap:null,eff:1});
+  return {t:0,units,prov};
+}
+function step(dt){
+  S.t+=dt;
+  for(const u of S.units){
+    if(u.bot&&Math.hypot(u.tx-u.x,u.ty-u.y)<4){u.tx=60+Math.random()*680;u.ty=60+Math.random()*480;}
+    const dx=u.tx-u.x,dy=u.ty-u.y,d=Math.hypot(dx,dy),v=60*dt;
+    if(d>v){u.x+=dx/d*v;u.y+=dy/d*v;}else{u.x=u.tx;u.y=u.ty;}
+  }
+  if(Math.random()<dt*.5){const p=S.prov[Math.floor(Math.random()*221)];p.owner=Math.floor(Math.random()*8);}
+}
+// команды: одна функция и для своих кликов, и для команд друга (так же будет в игре)
+function applyCommand(slot,c){
+  if(!c||c.type!=='move')return;
+  const u=S.units[slot];if(!u)return;
+  u.tx=Math.max(10,Math.min(790,+c.x||0));u.ty=Math.max(10,Math.min(590,+c.y||0));
+}
+function snapshot(){return $('heavy').checked?S:{t:S.t,units:S.units};}
+
+/* --- рисование --- */
+const shown=new Map(); // сглаженные позиции у друга
+function draw(){
+  ctx.fillStyle=getComputedStyle(document.body).getPropertyValue('--sea')||'#16232b';
+  ctx.fillRect(0,0,800,600);
+  ctx.strokeStyle='rgba(152,163,148,.12)';ctx.lineWidth=1;
+  for(let x=0;x<=800;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,600);ctx.stroke();}
+  for(let y=0;y<=600;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(800,y);ctx.stroke();}
+  const v=role==='guest'?view:S;if(!v)return;
+  for(const u of v.units){
+    let x=u.x,y=u.y;
+    if(role==='guest'){const s=shown.get(u.i)||{x,y};s.x+=(x-s.x)*.2;s.y+=(y-s.y)*.2;shown.set(u.i,s);x=s.x;y=s.y;}
+    const mine=u.i===mySlot,friend=role!=='solo'&&u.i===(mySlot===SLOT_HOST?SLOT_GUEST:SLOT_HOST);
+    if(mine||friend){ctx.setLineDash([4,4]);ctx.strokeStyle='rgba(217,180,74,.5)';ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(u.tx,u.ty);ctx.stroke();ctx.setLineDash([]);}
+    ctx.fillStyle=u.side?'#e0644f':'#4f8fe0';
+    ctx.strokeStyle=mine?'#d9b44a':friend?'#6fbf73':'#0e1210';ctx.lineWidth=mine||friend?3:1.5;
+    ctx.beginPath();ctx.rect(x-14,y-9,28,18);ctx.fill();ctx.stroke();
+    ctx.fillStyle='#e4e8dc';ctx.font='12px "PT Sans",sans-serif';ctx.textAlign='center';
+    ctx.fillText(mine?'Вы':friend?'Друг':u.n,x,y-14);
+  }
+}
+cv.addEventListener('pointerdown',e=>{
+  const r=cv.getBoundingClientRect(),x=(e.clientX-r.left)*800/r.width,y=(e.clientY-r.top)*600/r.height;
+  const c={type:'move',x:Math.round(x),y:Math.round(y)};
+  if(role==='guest'){if(net&&net.hostPeer)net.sendCommand(c);}
+  else applyCommand(mySlot,c);
+});
+
+/* --- цикл --- */
+let last=performance.now(),sendAcc=0,rateT=0,rateN=0,rateShown=0,prevRecv=0;
+function frame(now){
+  const dt=Math.min(.25,(now-last)/1000);last=now;
+  if(role!=='guest'){step(dt);
+    if(role==='host'){sendAcc+=dt;if(sendAcc>=.25){sendAcc=0;net.sendState(snapshot());}}}
+  rateT+=dt;if(rateT>=2){
+    const n=role==='host'?net.stats.snaps:role==='guest'?net.stats.recvSnaps:0;
+    rateShown=(n-prevRecv)/rateT;prevRecv=n;rateT=0;renderStats();}
+  draw();requestAnimationFrame(frame);
+}
+
+/* --- интерфейс --- */
+function setPill(kind,text){$('pill').className='pill '+kind;$('pillT').textContent=text;}
+function kb(n){return n>=1024?(n/1024).toFixed(1)+' КБ':n+' Б';}
+function renderStats(){
+  $('sRole').textContent=role==='host'?'хост':role==='guest'?'друг':'одиночная';
+  $('sRtt').textContent=role==='guest'&&net.rtt!=null?net.rtt+' мс':'—';
+  if(net&&role!=='solo'){
+    const st=net.stats;
+    $('sSize').textContent=role==='host'&&st.rawBytes?`${kb(st.rawBytes)} → ${kb(st.sentBytes)}`:role==='guest'&&st.recvSnaps?'получен':'—';
+    $('sChunks').textContent=st.chunks||'—';
+    $('sRate').textContent=rateShown?rateShown.toFixed(1):'—';
+  }else{$('sSize').textContent='—';$('sChunks').textContent='—';$('sRate').textContent='—';}
+}
+function showMode(m){$('idle').hidden=m!=='idle';$('hosting').hidden=m!=='host';$('joined').hidden=m!=='guest';$('lobbyBox').hidden=m!=='idle';}
+
+async function startHost(){
+  role='host';mySlot=SLOT_HOST;S.units[SLOT_GUEST].bot=true;
+  const code=await net.host({
+    onGuest(){S.units[SLOT_GUEST].bot=false;S.units[SLOT_GUEST].tx=S.units[SLOT_GUEST].x;S.units[SLOT_GUEST].ty=S.units[SLOT_GUEST].y;
+      $('guestT').textContent='Друг в матче. Его дивизия обведена зелёным.';setPill('good','Друг подключён');},
+    onGuestLeft(){S.units[SLOT_GUEST].bot=true;$('guestT').textContent='Друг вышел. Его дивизией снова управляет бот.';setPill('go','Ждём друга');},
+    onCommand(c){applyCommand(SLOT_GUEST,c);}
+  });
+  $('codeT').textContent=code;$('linkT').value=net.inviteLink(code);showMode('host');setPill('go','Ждём друга');renderStats();
+}
+async function startJoin(code){
+  code=String(code||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');if(!code)return;
+  role='guest';mySlot=SLOT_GUEST;view=null;shown.clear();showMode('guest');
+  $('joinT').textContent=`Подключаемся к матчу ${code}…`;setPill('go','Ищем хоста');
+  const timer=setTimeout(()=>{if(!net.hostPeer)$('joinT').textContent=`Хост матча ${code} пока не ответил. Проверьте код, или пусть друг откроет страницу заново.`;},8000);
+  await net.join(code,{
+    onWelcome(){clearTimeout(timer);$('joinT').textContent=`Вы в матче ${code}. Ваша дивизия обведена жёлтым.`;setPill('good','В матче');},
+    onState(obj){view=obj;},
+    onHostLeft(){$('joinT').textContent='Хост закрыл матч или потерял связь.';setPill('bad','Хост вышел');},
+    onFull(){clearTimeout(timer);$('joinT').textContent='В этом матче уже есть второй игрок.';setPill('bad','Матч занят');}
+  });
+  renderStats();
+}
+async function stop(){await net.leave();role='solo';mySlot=SLOT_HOST;S=newState();showMode('idle');setPill('good','Связь есть');renderStats();}
+
+$('hostBtn').onclick=()=>startHost().catch(e=>setPill('bad','Не удалось создать матч'));
+$('joinBtn').onclick=()=>startJoin($('codeIn').value).catch(e=>setPill('bad','Не удалось подключиться'));
+$('codeIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('joinBtn').click();});
+$('leaveBtn').onclick=stop;$('leave2Btn').onclick=stop;
+
+S=newState();showMode('idle');requestAnimationFrame(frame);
+$('copyBtn').onclick=()=>{const v=$('linkT').value;navigator.clipboard.writeText(v).then(()=>{$('copyBtn').textContent='Скопировано';setTimeout(()=>$('copyBtn').textContent='Копировать',1500)},()=>{$('linkT').select();});};
+NetP2P.create({
+  onStatus(s){
+    if(!s.ok){
+      const why={'peer-unavailable':'Матч с таким кодом не найден','network':'Нет связи с сервером встреч','server-error':'Сервер встреч не отвечает','browser-incompatible':'Браузер не поддерживает WebRTC','no_peerjs':'Не загрузилась библиотека связи'}[s.reason]||'Связь недоступна';
+      setPill('bad',why);if(role==='guest')$('joinT').textContent=why+'. Проверьте ссылку или попросите друга создать матч заново.';return;}
+    if(role==='solo')setPill('good','Готово к игре');
+  }
+}).then(n=>{net=n;
+  if(!n){$('hostBtn').disabled=$('joinBtn').disabled=true;$('hint').textContent='Библиотека связи не загрузилась. Здесь можно погонять дивизию одному.';return;}
+  $('hostBtn').disabled=$('joinBtn').disabled=false;setPill('good','Готово к игре');
+  const c=NetP2P.codeFromUrl();if(c)startJoin(c).catch(()=>setPill('bad','Не удалось подключиться'));
+});
+</script>
+
+</body>
+</html>
