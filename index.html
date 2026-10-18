@@ -159,6 +159,17 @@ a.channel:hover { border-color: var(--gold); transform: translateY(-2px); }
 .channel.soon .handle { color: var(--muted); }
 @media (max-width: 860px) { .follow { grid-template-columns: 1fr; } }
 
+/* Другая игра */
+.other { background: var(--panel); border-block: 1px solid var(--line); }
+.other .wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; align-items: center; }
+.other h2 { margin-top: 8px; }
+.other h2 + p { margin-top: 16px; color: var(--muted); font-size: 1.06rem; }
+.other ul { margin: 14px 0 24px; padding-left: 1.2em; color: var(--muted); display: grid; gap: 6px; }
+.other .phones { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.other .phones .shot { padding: 0; border: 0; background: none; cursor: zoom-in; }
+.other .phones img { display: block; width: 100%; aspect-ratio: 400 / 820; object-fit: cover; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); }
+@media (max-width: 860px) { .other .wrap { grid-template-columns: 1fr; gap: 28px; } }
+
 .final { text-align: left; display: grid; gap: 18px; justify-items: start; }
 
 footer { border-top: 1px solid var(--line); padding-block: 32px 44px; color: var(--muted); font-size: .88rem; }
@@ -186,6 +197,7 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
       <a href="#maps">Карты</a>
       <a href="#campaign">Кампания</a>
       <a href="#follow">Девлог</a>
+      <a href="#other">Другие игры</a>
     </nav>
     <a class="btn btn-primary" href="play/?v=0.69">Играть</a>
   </div>
@@ -335,6 +347,27 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <p>Страница игры с отзывами и комментариями.</p>
           <span class="handle">скоро</span>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block other" id="other">
+    <div class="wrap">
+      <div>
+        <p class="eyebrow">Другая моя игра · Android</p>
+        <h2>Кем стать? Игра в профессии</h2>
+        <p>Около 100 профессий в мини-играх: повар, программист, ветеринар, пилот, дизайнер. Отработайте смену, принимайте решения и узнайте, какая работа вам подходит.</p>
+        <ul>
+          <li>Короткий тест каждый день и «профессия дня»</li>
+          <li>Справка о профессии: обязанности, зарплата, где учиться</li>
+          <li>Без покупок и регистрации</li>
+        </ul>
+        <a class="btn btn-primary" href="https://www.rustore.ru/catalog/app/ru.profiday.app" target="_blank" rel="noopener">Скачать в RuStore</a>
+      </div>
+      <div class="phones">
+        <button class="shot" type="button" data-full="img/kem-avatar.jpg" aria-label="Открыть скриншот: создание героя"><img src="img/kem-avatar.jpg" alt="Создание своего героя в игре «Кем стать?»" loading="lazy"></button>
+        <button class="shot" type="button" data-full="img/kem-den.jpg" aria-label="Открыть скриншот: профессия дня"><img src="img/kem-den.jpg" alt="Профессия дня: блогер" loading="lazy"></button>
+        <button class="shot" type="button" data-full="img/kem-professii.jpg" aria-label="Открыть скриншот: справочник профессий"><img src="img/kem-professii.jpg" alt="Справочник профессий с зарплатами" loading="lazy"></button>
       </div>
     </div>
   </section>
