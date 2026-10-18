@@ -170,6 +170,16 @@ a.channel:hover { border-color: var(--gold); transform: translateY(-2px); }
 .other .phones img { display: block; width: 100%; aspect-ratio: 400 / 820; object-fit: cover; border-radius: 14px; border: 1px solid var(--line); background: var(--bg); }
 @media (max-width: 860px) { .other .wrap { grid-template-columns: 1fr; gap: 28px; } }
 
+.promo { display: flex; align-items: center; gap: 14px; padding: 12px 16px 12px 12px; border: 1px solid var(--line); border-radius: 12px; background: color-mix(in srgb, var(--panel) 92%, transparent); text-decoration: none; color: var(--ink); max-width: 380px; transition: border-color .15s ease, transform .15s ease; }
+.promo:hover { border-color: var(--gold); transform: translateY(-2px); }
+.promo img { width: 64px; height: 64px; border-radius: 14px; flex: none; }
+.promo span { display: grid; gap: 2px; min-width: 0; }
+.promo small { font-family: var(--font-mono); font-size: .7rem; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.promo b { font-size: 1.02rem; }
+.promo em { font-style: normal; color: var(--muted); font-size: .88rem; }
+.promo i { font-style: normal; color: var(--gold); font-size: 1.3rem; margin-left: auto; }
+@media (min-width: 1100px) { .hero .promo { position: absolute; right: 24px; top: 8px; width: 340px; } }
+
 .final { text-align: left; display: grid; gap: 18px; justify-items: start; }
 
 footer { border-top: 1px solid var(--line); padding-block: 32px 44px; color: var(--muted); font-size: .88rem; }
@@ -216,6 +226,11 @@ footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; g
           <a class="btn" href="https://t.me/liniya_fronta_dev" target="_blank" rel="noopener">Девлог в Telegram</a>
           <a class="btn" href="https://www.youtube.com/channel/UCqmKZNCOQPd6cwgR0ytEj9w" target="_blank" rel="noopener">YouTube</a>
         </div>
+        <a class="promo" href="#other">
+          <img src="img/kem-icon.jpg" alt="" width="64" height="64">
+          <span><small>Другая моя игра</small><b>Кем стать? Игра в профессии</b><em>100 профессий в мини-играх · Android</em></span>
+          <i aria-hidden="true">→</i>
+        </a>
         <p class="note">Бесплатно, без установки · компьютер и телефон · версия 0.69, игра в разработке</p>
       </div>
       <button class="shot screen" type="button" data-full="img/koreya.jpg" aria-label="Открыть скриншот: Корейский полуостров">
